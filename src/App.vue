@@ -2,7 +2,7 @@
   <div id="app">
     <div class="container">
       <div class="card" v-if="intro">
-        <div class="grid-container">
+        <div class="grid-container select-list">
           <button class="grid-item"
               v-for="province in provinces" :key="province.prefCode"
               v-on:click="provinceSelected($event)"
@@ -10,6 +10,7 @@
               v-bind:value="province.prefName"
           >{{ province.prefName }}</button>
         </div>
+        <button class="show-select-list" @click="selectItem()">+</button>
       </div>
       <div class="card" v-if="chartShow">
         <highcharts class="hc" :options="chartOptions" ref="chart"></highcharts>
@@ -68,6 +69,8 @@ export default {
         });
     },
     provinceSelected: function (event) {
+      $('.select-list').hide('slow');
+      $('.show-select-list').show('slow');
       $(event.target).toggleClass("item-checked");
       this.bufferObj = this.chartOptions.series.find(
         (o) => o.id === event.target.id.toString()
@@ -106,6 +109,10 @@ export default {
         this.chartOptions.series.splice(this.chartOptions.series.indexOf(this.bufferObj),1);
         if (this.chartOptions.series.length == 0) this.chartShow = false;
       }
+    },
+    selectItem: function(){
+      $('.select-list').show('slow');
+      $('.show-select-list').hide('slow');
     },
     show() {
       this.intro = true;
@@ -215,6 +222,15 @@ export default {
     height: 15px;
     margin: -8px 5px 0 0;
   }
+}
+.show-select-list{
+  background-color:#3dd871;
+  padding: 10px 20px;
+  border: 1px solid #3dd871;
+  border-radius: 15px;
+  color: white;
+  font-size: 20px;
+  display: none;
 }
 </style>
 

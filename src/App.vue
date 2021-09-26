@@ -1,21 +1,27 @@
 <template>
   <div id="app">
     <div class="container">
-      <div class="card" v-if="intro">
-        <div class="grid-container select-list">
-          <button class="grid-item"
-              v-for="province in provinces" :key="province.prefCode"
-              v-on:click="provinceSelected($event)"
-              v-bind:id="province.prefCode"
-              v-bind:value="province.prefName"
-          >{{ province.prefName }}</button>
+      <div class="card select-list" v-if="!intro">
+        <div class="grid-container">
+          <button
+            class="grid-item"
+            v-for="province in provinces"
+            :key="province.prefCode"
+            v-on:click="provinceSelected($event)"
+            v-bind:id="province.prefCode"
+            v-bind:value="province.prefName"
+          >
+            {{ province.prefName }}
+          </button>
         </div>
-        <button class="show-select-list" @click="selectItem()">+</button>
       </div>
-      <div class="card" v-if="chartShow">
+      <button class="card show-select-list" @click="selectItem()">
+        + / -
+      </button>
+      <div id="chartView" class="card" v-if="chartShow">
         <highcharts class="hc" :options="chartOptions" ref="chart"></highcharts>
       </div>
-      <div @click="show()" v-if="!intro" class="start-button drop loading">
+      <div @click="show()" v-if="intro" class="start-button drop loading">
         +
       </div>
     </div>
@@ -39,7 +45,6 @@ export default {
           text: "人口チャート",
         },
         chart: {
-          height: 500,
           type: "line",
         },
         yAxis: {
@@ -69,8 +74,6 @@ export default {
         });
     },
     provinceSelected: function (event) {
-      $('.select-list').hide('slow');
-      $('.show-select-list').show('slow');
       $(event.target).toggleClass("item-checked");
       this.bufferObj = this.chartOptions.series.find(
         (o) => o.id === event.target.id.toString()
@@ -103,16 +106,23 @@ export default {
             });
             $(event.target).attr("disabled", false);
             $(event.target).removeClass("spinning");
+            $(".select-list").hide("slow");
+            $(".show-select-list").show("slow");
             if (this.chartOptions.series.length > 0) this.chartShow = true;
           });
       } else {
-        this.chartOptions.series.splice(this.chartOptions.series.indexOf(this.bufferObj),1);
+        $(".select-list").hide("slow");
+        $(".show-select-list").show("slow");
+        this.chartOptions.series.splice(
+          this.chartOptions.series.indexOf(this.bufferObj),
+          1
+        );
         if (this.chartOptions.series.length == 0) this.chartShow = false;
       }
     },
-    selectItem: function(){
-      $('.select-list').show('slow');
-      $('.show-select-list').hide('slow');
+    selectItem: function () {
+      $(".select-list").show("slow");
+      $(".show-select-list").hide("slow");
     },
     show() {
       this.intro = true;
@@ -120,6 +130,8 @@ export default {
     },
   },
   created() {
+    console.log($(window).height());
+    this.chartOptions.chart.height = $(window).height() * 0.7;
     this.loadingAllProvince();
     document.querySelector("body").style.overflowX = "hidden";
   },
@@ -140,12 +152,12 @@ export default {
   cursor: pointer;
   box-shadow: 0 0 20px 8px #d0d0d0;
   padding: 20px 30px;
-  margin: 20px 0;
+  margin: 20px 0 0 0;
 }
 .grid-container {
   display: inline-grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
   width: 100%;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
 }
 .grid-item {
   text-align: center;
@@ -223,14 +235,49 @@ export default {
     margin: -8px 5px 0 0;
   }
 }
-.show-select-list{
-  background-color:#3dd871;
-  padding: 10px 20px;
+.show-select-list {
+  background-color: #3dd871;
   border: 1px solid #3dd871;
   border-radius: 15px;
   color: white;
   font-size: 20px;
+  width: 100%;
   display: none;
+}
+@media screen and (max-width: 1024px) {
+  .grid-container {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  }
+}
+@media screen and (max-width: 768px) {
+  .grid-container {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+  }
+}
+@media screen and (max-width: 644px) {
+  .grid-container {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  }
+}
+@media screen and (max-width: 567px) {
+  .grid-container {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+}
+@media screen and (max-width: 447px) {
+  .grid-container {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+@media screen and (max-width: 375px) {
+  .grid-container {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media screen and (max-width: 285px) {
+  .grid-container {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
 

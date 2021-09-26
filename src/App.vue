@@ -1,27 +1,30 @@
 <template>
   <div id="app">
     <div class="container">
-      <div class="card select-list" v-if="!intro">
-        <div class="grid-container">
-          <button
-            class="grid-item"
-            v-for="province in provinces"
-            :key="province.prefCode"
-            v-on:click="provinceSelected($event)"
-            v-bind:id="province.prefCode"
-            v-bind:value="province.prefName"
-          >
-            {{ province.prefName }}
-          </button>
+      <div v-if="!intro">
+        <div class="card select-list">
+          <div class="province-search">
+            <input type="text" v-model="provinceSearch" placeholder="Province want to search . . ."/>
+          </div>
+          <div class="grid-container">
+            <button
+              class="grid-item item-not-selected"
+              v-for="province in provinces"
+              :key="province.prefCode"
+              v-on:click="provinceSelected($event)"
+              v-bind:id="province.prefCode"
+              v-bind:value="province.prefName"
+            >
+              {{ province.prefName }}
+            </button>
+          </div>
+        </div>
+        <button class="card show-select-list" @click="selectItem()">+ / -</button>
+        <div id="chartView" class="card" v-if="chartShow">
+          <highcharts class="hc" :options="chartOptions" ref="chart"></highcharts>
         </div>
       </div>
-      <button class="card show-select-list" @click="selectItem()">
-        + / -
-      </button>
-      <div id="chartView" class="card" v-if="chartShow">
-        <highcharts class="hc" :options="chartOptions" ref="chart"></highcharts>
-      </div>
-      <div @click="show()" v-if="intro" class="start-button drop loading">
+      <div @click="endIntro()" v-if="intro" class="start-button drop">
         +
       </div>
     </div>
@@ -34,8 +37,9 @@ export default {
   name: "App",
   data() {
     return {
+      apiLink: "https://opendata.resas-portal.go.jp/api/v1",
       apiKey: "mWoSgpkUSvaG4xrQy3VGp9o3sh8QjfIBHDLDtyGe",
-      intro: false,
+      intro: true,
       provinces: null,
       chartShow: false,
       arrayData: [],
@@ -64,7 +68,7 @@ export default {
   methods: {
     loadingAllProvince: function () {
       axios
-        .get("https://opendata.resas-portal.go.jp/api/v1/prefectures", {
+        .get(this.apiLink + "/prefectures", {
           headers: {
             "X-API-KEY": this.apiKey,
           },
@@ -73,8 +77,12 @@ export default {
           this.provinces = response.data.result;
         });
     },
+    filteredList() {
+      return this.provinces.filter(province => {
+        return province.prefName.toLowerCase().includes(this.provinceSearch.toLowerCase())
+      })
+    },
     provinceSelected: function (event) {
-      $(event.target).toggleClass("item-checked");
       this.bufferObj = this.chartOptions.series.find(
         (o) => o.id === event.target.id.toString()
       );
@@ -83,7 +91,8 @@ export default {
         $(event.target).addClass("spinning");
         axios
           .get(
-            "https://opendata.resas-portal.go.jp/api/v1/population/composition/perYear?cityCode=-&prefCode=" +
+            this.apiLink +
+              "/population/composition/perYear?cityCode=-&prefCode=" +
               event.target.id,
             {
               headers: {
@@ -106,26 +115,33 @@ export default {
             });
             $(event.target).attr("disabled", false);
             $(event.target).removeClass("spinning");
+            $(event.target).addClass("item-checked");
             $(".select-list").hide("slow");
             $(".show-select-list").show("slow");
             if (this.chartOptions.series.length > 0) this.chartShow = true;
           });
       } else {
+        $(event.target).removeClass("item-checked");
         $(".select-list").hide("slow");
-        $(".show-select-list").show("slow");
         this.chartOptions.series.splice(
           this.chartOptions.series.indexOf(this.bufferObj),
           1
         );
-        if (this.chartOptions.series.length == 0) this.chartShow = false;
+        if (this.chartOptions.series.length == 0) {
+          this.chartShow = false;
+          this.intro = true;
+        }
+        else{
+          $(".show-select-list").show("slow");
+        }
       }
     },
     selectItem: function () {
       $(".select-list").show("slow");
       $(".show-select-list").hide("slow");
     },
-    show() {
-      this.intro = true;
+    endIntro() {
+      this.intro = false;
       //document.querySelector("body").style.overflowY = 'scroll';
     },
   },
@@ -173,38 +189,87 @@ export default {
   padding: 8px 12px;
   cursor: pointer;
 }
+.item-not-selected:hover {
+  background-color: #3dd871;
+  border: 2px solid #3dd871;
+  color: white;
+  transition: all 0.2s;
+}
 .item-checked {
   border: 2px solid #1bdbf8;
   background-color: #12bbd4;
   color: #fff;
   transition: all 0.2s;
 }
+.item-checked:hover {
+  opacity: 0.5;
+  text-decoration-line: line-through;
+  text-decoration-thickness: 2px;
+  text-decoration-color: black;
+  border: 2px solid #a82e09;
+  background-color: #a82e09;
+  color: white;
+  font-weight: bold;
+  /* color: #fff; */
+  transition: all 0.2s;
+}
 .start-button {
-  margin: auto;
-  margin-top: 10%;
   height: 20rem;
   line-height: 20rem;
   width: 20rem;
-  background-color: rgb(49, 133, 182);
+  margin: auto;
+  margin-top: 10%;
+  background-color: #3dd871;
   border-radius: 50%;
   cursor: pointer;
   text-align: center;
   color: white;
   font-size: 15rem;
+  box-shadow: 0 0 20px 8px #d0d0d0;
 }
 .drop {
-  animation: drop 1s normal;
+  animation: drop 2s normal;
 }
 @keyframes drop {
   0% {
-    transform-origin: center;
-    opacity: 1;
-  }
-  /* 50% {
-    opacity: 0.5;
-  } */
-  to {
+    margin-top: -1000px;
     opacity: 0;
+  }
+  25% {
+    margin-top: 10%;
+    opacity: 0.25;
+  }
+  45% {
+    margin-top: 0%;
+    opacity: 0.45;
+  }
+  60% {
+    margin-top: 10%;
+    opacity: 0.6;
+  }
+  70% {
+    margin-top: 5%;
+    opacity: 0.7;
+  }
+  75% {
+    margin-top: 10%;
+    opacity: 0.75;
+  }
+  80% {
+    margin-top: 8%;
+    opacity: 0.8;
+  }
+  85% {
+    margin-top: 10%;
+    opacity: 0.85;
+  }
+  90% {
+    margin-top: 9%;
+    opacity: 0.9;
+  }
+  95% {
+    margin-top: 10%;
+    opacity: 0.95;
   }
 }
 .spinning {
@@ -263,6 +328,11 @@ export default {
   .grid-container {
     grid-template-columns: 1fr 1fr 1fr 1fr;
   }
+  .start-button {
+  height: 10rem;
+  line-height: 10rem;
+  width: 10rem;
+  }
 }
 @media screen and (max-width: 447px) {
   .grid-container {
@@ -278,6 +348,23 @@ export default {
   .grid-container {
     grid-template-columns: 1fr;
   }
+}
+.province-search {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.province-search input {
+  width: 80%;
+  text-align: center;
+  padding: 12px 20px;
+  margin: 8px;
+  box-sizing: border-box;
+  border: 2px solid rgba(139, 139, 139, 0.623);
+  border-radius: 25px;
+}
+.province-search input:focus {
+  outline: none;
 }
 </style>
 

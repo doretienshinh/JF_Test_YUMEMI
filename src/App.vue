@@ -18,9 +18,10 @@
               class="grid-item item-not-selected"
               v-for="province in filterItems(provinces)"
               :key="province.prefCode"
-              v-on:click="provinceSelected($event)"
+              v-on:click="provinceSelected($event, province)"
               v-bind:id="province.prefCode"
               v-bind:value="province.prefName"
+              v-bind:class="{'item-checked' : province.check}"
             >
               {{ province.prefName }}
             </button>
@@ -87,6 +88,9 @@ export default {
         })
         .then((response) => {
           this.provinces = response.data.result;
+          this.provinces.forEach(province =>{
+            province.check = false;
+          })
         });
     },
     filterItems: function (provinces) {
@@ -100,7 +104,8 @@ export default {
         });
       }
     },
-    provinceSelected: function (event) {
+    provinceSelected: function (event, province) {
+      province.check = !province.check;
       this.bufferObj = this.chartOptions.series.find(
         (o) => o.id === event.target.id.toString()
       );
@@ -159,6 +164,7 @@ export default {
     selectItem: function () {
       $(".select-list").show("slow");
       $(".show-select-list").hide("slow");
+      this.provinceSearch == "";
     },
     endIntro() {
       this.intro = false;
